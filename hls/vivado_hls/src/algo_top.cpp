@@ -93,46 +93,62 @@ void algo_top(hls::stream<axiword> link_in[N_INPUT_LINKS], hls::stream<axiword> 
 
 
   // Step 1: Unpack links
-  TowersInEta towersInPhi[TOWERS_IN_PHI];
-#pragma HLS ARRAY_PARTITION variable=towersInPhi complete dim=0
+  TowersInEta towersInPosEta[TOWERS_IN_PHI];
+  TowersInEta towersInNegEta[TOWERS_IN_PHI];
+#pragma HLS ARRAY_PARTITION variable=towersInPosEta complete dim=0
+#pragma HLS ARRAY_PARTITION variable=towersInNegEta complete dim=0
 
-  for (size_t ilink = 0; ilink < N_INPUT_LINKS; ilink++) {
+  for (size_t ilink = 0; ilink < N_INPUT_LINKS/2; ilink++) {
 #pragma LOOP UNROLL
-    #pragma HLS latency min=1
-    towersInPhi[ilink] = unpackInputLink(link_in[ilink]);
+#pragma HLS latency min=1
+     size_t iPosEta = ilink;
+     size_t iNegEta = ilink + (N_INPUT_LINKS/2);
+     towersInPosEta[ilink] = unpackInputLink(link_in[iPosEta]);
+     towersInNegEta[ilink] = unpackInputLink(link_in[iNegEta]);
   }
 
-#ifndef __SYNTHESIS__  
-  for(int tphi=0; tphi<TOWERS_IN_PHI; tphi++){
-    for(int teta=0; teta<TOWERS_IN_ETA; teta++){
-
-      if(towersInPhi[tphi].towers[teta].cluster_et() != 0 )
-	cout<<std::dec<<"[tphi, teta] = ["<<tphi<<", "<<teta<<"]: "<<towersInPhi[tphi].towers[teta].toString()<<endl;
-    }
-  }
-#endif
+ #ifndef __SYNTHESIS__  
+   for(int tphi=0; tphi<TOWERS_IN_PHI; tphi++){
+     for(int teta=0; teta<TOWERS_IN_ETA; teta++){
+ 
+       if(towersInPosEta[tphi].towers[teta].cluster_et() != 0 )
+ 	cout<<std::dec<<"Pos [tphi, teta] = ["<<tphi<<", "<<teta<<"]: "<<towersInPosEta[tphi].towers[teta].toString()<<endl;
+      if(towersInNegEta[tphi].towers[teta].cluster_et() != 0 )
+ 	cout<<std::dec<<"Neg [tphi, teta] = ["<<tphi<<", "<<teta<<"]: "<<towersInNegEta[tphi].towers[teta].toString()<<endl;
+     }
+   }
+ #endif
 
   // Step 2: Stitch accross phi boundaries
-  TowersInEta stitchedInPhi[TOWERS_IN_PHI];
-#pragma HLS ARRAY_PARTITION variable=stitchedInPhi  complete dim=0
+  TowersInEta stitchedTowersInPosEta[TOWERS_IN_PHI];
+  TowersInEta stitchedTowersInNegEta[TOWERS_IN_PHI];
+#pragma HLS ARRAY_PARTITION variable=stitchedTowersInPosEta complete dim=0
+#pragma HLS ARRAY_PARTITION variable=stitchedTowersInNegEta complete dim=0
 
-  mergeInEta(towersInPhi, stitchedInPhi);
-
-#ifndef __SYNTHESIS__  
   for(int tphi=0; tphi<TOWERS_IN_PHI; tphi++){
-    for(int teta=0; teta<TOWERS_IN_ETA; teta++){
-
-      if(stitchedInPhi[tphi].towers[teta].cluster_et() != 0 )
-	cout<<std::dec<<"[tphi, teta] = ["<<tphi<<", "<<teta<<"]: "<<stitchedInPhi[tphi].towers[teta].toString()<<endl;
-    }
+#pragma HLS LOOP UNROLL
+     stitchInPhi(towersInPosEta[tphi], towersInNegEta[tphi], stitchedTowersInPosEta[tphi], stitchedTowersInNegEta[tphi]);
   }
-#endif
+
+//-| #ifndef __SYNTHESIS__  
+//-|   for(int tphi=0; tphi<TOWERS_IN_PHI; tphi++){
+//-|     for(int teta=0; teta<TOWERS_IN_ETA; teta++){
+//-| 
+//-|       if(stitchedInPhi[tphi].towers[teta].cluster_et() != 0 )
+//-| 	cout<<std::dec<<"[tphi, teta] = ["<<tphi<<", "<<teta<<"]: "<<stitchedInPhi[tphi].towers[teta].toString()<<endl;
+//-|     }
+//-|   }
+//-| #endif
 
 
   // Step 4: Pack the outputs
-  for (size_t i = 0; i < N_OUTPUT_LINKS; i++) {
+  for (size_t olink = 0; olink < N_OUTPUT_LINKS/2; olink++) {
 #pragma LOOP UNROLL
 #pragma HLS latency min=1
-    packOutput(stitchedInPhi[i], link_out[i]);
+     size_t oPosEta = olink;
+     size_t oNegEta = olink + (N_OUTPUT_LINKS/2);
+
+    packOutput(stitchedTowersInPosEta[olink], link_out[oPosEta]);
+    packOutput(stitchedTowersInNegEta[olink], link_out[oNegEta]);
   }
 }

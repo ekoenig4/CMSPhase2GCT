@@ -22,9 +22,9 @@ const int N_WORDS_PER_FRAME	= 9;
 // N_INPUT_LINKS and N_OUTPUT_LINKS need to be numerically specified so that wrapper generators work.
 // -- N_INPUT_LINKS = TOWERS_IN_PHI*2
 // -- For only one eta half
-#define N_INPUT_LINKS	32 
+#define N_INPUT_LINKS	64 
 // -- N_OUTPUT_LINKS = TOWERS_IN_PHI*2 
-#define N_OUTPUT_LINKS	32
+#define N_OUTPUT_LINKS	64
 
 // 25G inputs
 #define N_INPUT_WORDS_PER_FRAME 9
