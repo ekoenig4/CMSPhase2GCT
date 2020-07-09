@@ -57,12 +57,22 @@ class TowersInEta{
   public:
     TowersInEta(){
 #pragma HLS ARRAY_PARTITION variable=towers complete dim=0
-      for (size_t eta = 0; eta < 17; eta++) {
+      for (size_t eta = 0; eta < TOWERS_IN_ETA; eta++) {
 #pragma LOOP UNROLL
 	this->towers[eta] = Tower();
       }
     }
-    Tower towers[17];
+
+    Tower getTower(size_t i){
+      if(i < TOWERS_IN_ETA){
+	return this->towers[i];
+      }
+      else{
+	Tower tmp;
+	return tmp;
+      }
+    }
+    Tower towers[TOWERS_IN_ETA];
 };
 
 template<typename T, int N>

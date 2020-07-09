@@ -75,7 +75,7 @@ bool packOutput(TowersInEta tEta_, hls::stream<algo::axiword> &olink){
   word_576b_(543, 512) = (ap_uint<32>) tEta_.towers[16].data;
   word_576b_(575, 544) = (ap_uint<32>) 0;
 
-  axiword r; r.last = 1; r.user = 0;
+  axiword r; r.last = 0; r.user = 0;
   r.data = word_576b_;
   olink.write(r);
 
@@ -112,69 +112,27 @@ void algo_top(hls::stream<axiword> link_in[N_INPUT_LINKS], hls::stream<axiword> 
   }
 #endif
 
-  TowersInEta towersInPhi_buffered[TOWERS_IN_PHI];
-#pragma HLS ARRAY_PARTITION variable=towersInPhi_buffered  complete dim=0
-
-  buffering<TowersInEta, TOWERS_IN_PHI>(towersInPhi, towersInPhi_buffered); 
-
   // Step 2: Stitch accross phi boundaries
   TowersInEta stitchedInPhi[TOWERS_IN_PHI];
 #pragma HLS ARRAY_PARTITION variable=stitchedInPhi  complete dim=0
 
-  for(size_t tphi = 0; tphi < TOWERS_IN_PHI-4; tphi += 4){
-#pragma LOOP UNROLL
-    stitchedInPhi[tphi+1] = towersInPhi_buffered[tphi+1];
-    stitchedInPhi[tphi+2] = towersInPhi_buffered[tphi+2];
+  mergeInEta(towersInPhi, stitchedInPhi);
 
-#ifndef __SYNTHESIS__  
-    cout<<"tphi = "<<tphi+3<<", "<<tphi+4<<":--"<<endl;
-#endif
-    stitchInEta(towersInPhi_buffered[tphi+3], towersInPhi_buffered[tphi+4], stitchedInPhi[tphi+3], stitchedInPhi[tphi+4]);
-  }
-  stitchedInPhi[0]               = towersInPhi_buffered[0];
-  stitchedInPhi[TOWERS_IN_PHI-1] = towersInPhi_buffered[TOWERS_IN_PHI-1];
-  stitchedInPhi[TOWERS_IN_PHI-2] = towersInPhi_buffered[TOWERS_IN_PHI-2];
-  stitchedInPhi[TOWERS_IN_PHI-3] = towersInPhi_buffered[TOWERS_IN_PHI-3];
-
-  //-|   // Step 3: stitch accross eta boundaries
-  //-|   TowersInEta stitchedPosEta[TOWERS_IN_PHI];
-  //-|   TowersInEta stitchedNegEta[TOWERS_IN_PHI];
-  //-| #pragma HLS ARRAY_PARTITION variable=stitchedPosEta  complete dim=0
-  //-| #pragma HLS ARRAY_PARTITION variable=stitchedNegEta  complete dim=0
-  //-| 
-  //-|   for(int tphi=0; tphi<TOWERS_IN_PHI; tphi++){
-  //-| #pragma LOOP UNROLL
-  //-| 
-  //-| #ifndef __SYNTHESIS__  
-  //-|     cout<<"tphi = "<<tphi<<endl;;
-  //-| #endif
-  //-|     stitchInPhi(stitchedInPhiPosEta[tphi], stitchedInPhiNegEta[tphi],  stitchedPosEta[tphi],  stitchedNegEta[tphi]);
-  //-|   }
-  //-| 
 #ifndef __SYNTHESIS__  
   for(int tphi=0; tphi<TOWERS_IN_PHI; tphi++){
     for(int teta=0; teta<TOWERS_IN_ETA; teta++){
 
       if(stitchedInPhi[tphi].towers[teta].cluster_et() != 0 )
-	cout<<std::dec<<"Pos: [tphi, teta] = ["<<tphi<<", "<<teta<<"]: "<<stitchedInPhi[tphi].towers[teta].toString()<<endl;
-      //cout<<std::dec<<"Pos: [tphi, teta] = ["<<tphi<<", "<<teta<<"]: "<<stitchedInPhi[tphi].towers[teta].toString()<<"  "<<std::hex<<stitchedInPhi[tphi].towers[teta].data<<endl;
-      //       if(stitchedNegEta[tphi].towers[teta].cluster_et() != 0 )
-      //	 cout<<std::dec<<"Neg: [tphi, teta] = ["<<tphi<<", "<<teta+TOWERS_IN_ETA<<"]: "<<stitchedNegEta[tphi].towers[teta].toString()<<"  "<<std::hex<<stitchedNegEta[tphi].towers[teta].data<<endl;
+	cout<<std::dec<<"[tphi, teta] = ["<<tphi<<", "<<teta<<"]: "<<stitchedInPhi[tphi].towers[teta].toString()<<endl;
     }
   }
 #endif
 
 
-  // Step 2: Stitch accross phi boundaries
-  TowersInEta stitchedInPhi_buffered[TOWERS_IN_PHI];
-#pragma HLS ARRAY_PARTITION variable=stitchedInPhi_buffered  complete dim=0
-
-  buffering<TowersInEta, TOWERS_IN_PHI>(stitchedInPhi, stitchedInPhi_buffered); 
-  
   // Step 4: Pack the outputs
   for (size_t i = 0; i < N_OUTPUT_LINKS; i++) {
 #pragma LOOP UNROLL
 #pragma HLS latency min=1
-    packOutput(stitchedInPhi_buffered[i], link_out[i]);
+    packOutput(stitchedInPhi[i], link_out[i]);
   }
 }
