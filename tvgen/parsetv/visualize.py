@@ -15,8 +15,8 @@ def DrawInputTV(tv):
     # towers = TH2I(hsname+"_towers","%s;iPhi;iEta"%hsname,tphi,0,nphi,teta,0,neta)
 
     for ybin in range(neta):
-        if ybin < 17: clusters.GetYaxis().SetBinLabel(ybin+1,str(ybin-17))
-        else: clusters.GetYaxis().SetBinLabel(ybin+1,str(ybin-16))
+        if ybin < 17: clusters.GetYaxis().SetBinLabel(ybin+1,str( -1*(ybin-17) ))
+        else: clusters.GetYaxis().SetBinLabel(ybin+1,str( -1*(ybin-16) ))
 
     for xbin in range(nphi):
         if xbin%4 == 0: clusters.GetXaxis().SetBinLabel(xbin+1,str(xbin))
@@ -24,7 +24,7 @@ def DrawInputTV(tv):
         
 
     for tower in tv.towers:
-        teta = tower.eta
+        teta = tower.eta * -1
         tphi = tower.phi
         
         if tower.tower_et > 0:
