@@ -63,15 +63,6 @@ class TowersInEta{
       }
     }
 
-    Tower getTower(size_t i){
-      if(i < TOWERS_IN_ETA){
-	return this->towers[i];
-      }
-      else{
-	Tower tmp;
-	return tmp;
-      }
-    }
     Tower towers[TOWERS_IN_ETA];
 };
 
