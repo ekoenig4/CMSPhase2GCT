@@ -27,10 +27,10 @@ for tv in ${tvlist[@]}; do
     input=data_mc/input/$tv
     output=data_mc/output/${tv/in/out}
     outref=data_mc/outref/${tv/in/out_ref}
-    # sim
+    sim
     plot
 done
 
 # if [[ -e dump_tfile ]]; then 
-dump_tfile $plotout -o ~/public_html/Trigger/MC_GCT_TV/gct_inout_tv.pdf -n 2
+dump_tfile $plotout -o ~/public_html/Trigger/MC_GCT_TV/gct_inout_tv_phiStitch.pdf -n 2
 # fi
