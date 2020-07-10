@@ -24,11 +24,13 @@ def DrawInputTV(tv):
         
 
     for tower in tv.towers:
-        teta = tower.eta * -1
+        teta = tower.eta
         tphi = tower.phi
         
         if tower.tower_et > 0:
-            clusters.Fill(tphi,teta,tower.tower_et)
+            if teta < 0: teta += 0.5
+            else:        teta -= 0.5
+            clusters.Fill(tphi,teta*-1,tower.tower_et)
     c = TCanvas(hsname,hsname,800,800)
     c.SetGrid()
     clusters.Draw("COLZ TEXT")
